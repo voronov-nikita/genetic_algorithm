@@ -13,7 +13,7 @@ COUNT_PERSON = 20  # количесвто индивидов в популяци
 PROBABILITY_CROSSING = 0.9  # шанс скрещивания ( по идее можно взять и 1(100%))
 PROBABILITY_MUTATION = 0.1  # шанс мутации
 
-COUNT_GENERATION = 20  # количество поколений ( итераций)
+COUNT_GENERATION = 200  # количество поколений ( итераций)
 
 
 # <------------------- Описание генетического алгоритма ------------------->
@@ -79,7 +79,7 @@ def tournament_selection(instance_population, size_population):
 # разрез хромосомы задается случайны образом
 def crossing_individs(parent1, parent2):
     cut_point_chromosome = randint(2, len(parent1) - 3)
-    parent1[cut_point_chromosome:], parent2[cut_point_chromosome:] = parent2[cut_point_chromosome], parent1[
+    parent1[cut_point_chromosome:], parent2[cut_point_chromosome:] = parent2[cut_point_chromosome:], parent1[
                                                                                                     cut_point_chromosome:]
 
 
@@ -94,10 +94,10 @@ def mutation(instance_individ, chance_mutation_one_gen=0.01):
 
 # <------------------- Начало работы ------------------->
 
-population = create_population()
+population = create_population(size=COUNT_PERSON)
 CountGeneration = 0
 
-value_fitness = list(map(create_individ, population))
+value_fitness = list(map(calculator_fitness_individ, population))
 
 for individual, value_fitness in zip(population, value_fitness):
     individual.fitness.values = value_fitness
@@ -107,4 +107,36 @@ averageFitnessValue = []
 
 value_fitness = [individual.fitness.values[0] for individual in population]
 
-while max(value_fitness) < 
+while max(value_fitness) < LEN_CHROMOSOME or CountGeneration < COUNT_GENERATION:
+    CountGeneration += 1
+    best_instance = tournament_selection(population, len(population))
+    best_instance = list(map(clone_individ, best_instance))
+
+    for child1, child2 in zip(best_instance[::2], best_instance[1::2]):
+        if random() < PROBABILITY_CROSSING:
+            crossing_individs(child1, child2)
+
+    for mutant in best_instance:
+        if random() < PROBABILITY_CROSSING:
+            mutation(mutant, chance_mutation_one_gen=1 / LEN_CHROMOSOME)
+
+    freshFitnessValue = list(map(calculator_fitness_individ, best_instance))
+    for individual, value_fitness in zip(best_instance, freshFitnessValue):
+        individual.fitness.values = value_fitness
+
+    population[:] = best_instance
+
+    value_fitness = [ind.fitness.values[0] for ind in population]
+
+    maxFitness = max(value_fitness)
+    averageFitness = sum(value_fitness) / len(population)
+
+    maxFitnessValue.append(maxFitness)
+    averageFitnessValue.append(averageFitness)
+
+    print(
+        f"Поколение {CountGeneration}: Максимальная приспособленность = {maxFitness}, средняя = {averageFitnessValue}")
+
+    index_best_individual = value_fitness.index(max(value_fitness))
+    print(f"Лучший: №{index_best_individual+1} =", *population[index_best_individual])
+    print("\n"*3)
