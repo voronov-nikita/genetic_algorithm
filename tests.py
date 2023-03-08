@@ -1,3 +1,4 @@
-import random
+a = 1
+b = 0
 
-print(random.random())
+print(int(not(a)), int(not(b)))
